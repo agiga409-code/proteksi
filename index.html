@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Photo Capture</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Camera Photo Capture</h1>
+        
+        <!-- Camera Section -->
+        <section class="camera-section">
+            <div class="video-container">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+            </div>
+            <div class="camera-controls">
+                <button id="startCamera">🚀 Start Camera</button>
+                <button id="capture" disabled>📷 Capture Photo</button>
+                <button id="stopCamera" disabled>⏹️ Stop Camera</button>
+            </div>
+        </section>
+        
+        <!-- Gallery Section -->
+        <section class="gallery-section">
+            <h2>📸 Captured Photos</h2>
+            <div class="gallery-controls">
+                <button id="clearAll">🗑️ Clear All Photos</button>
+            </div>
+            <div id="gallery" class="photo-gallery">
+                <p>No photos captured yet. Take some photos!</p>
+            </div>
+        </section>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
+

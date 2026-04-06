@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📸 Gallery Foto</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="login-container" class="login-container">
+            <h2>🔐 Masuk Gallery</h2>
+            <input type="password" id="password-input" placeholder="Password" maxlength="20">
+            <button id="login-btn">Masuk</button>
+            <p id="login-error" class="error hidden">Password salah!</p>
+        </div>
+        <div id="gallery-container" class="hidden">
+            <h1>📸 Gallery Rahasia</h1>
+            <div class="gallery-controls">
+                <button id="refresh">🔄 Refresh</button>
+                <button id="clearAll">🗑️ Hapus Semua</button>
+            </div>
+            <div id="gallery" class="photo-gallery">
+                <p>Loading...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        const PASSWORD = 'admin0123';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginContainer = document.getElementById('login-container');
+            const galleryContainer = document.getElementById('gallery-container');
+            const passwordInput = document.getElementById('password-input');
+            const loginBtn = document.getElementById('login-btn');
+            const loginError = document.getElementById('login-error');
+            
+            loginBtn.onclick = () => {
+                if (passwordInput.value === PASSWORD) {
+                    loginContainer.classList.add('hidden');
+                    galleryContainer.classList.remove('hidden');
+                    window.app = new PhotoCaptureApp('gallery');
+                    window.app.loadPhotos();
+                    document.getElementById('refresh').onclick = () => window.app.loadPhotos();
+                    document.getElementById('clearAll').onclick = () => window.app.clearAllPhotos();
+                } else {
+                    loginError.classList.remove('hidden');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            };
+            
+            passwordInput.onkeypress = (e) => {
+                if (e.key === 'Enter') loginBtn.click();
+            };
+            
+            passwordInput.focus();
+        });
+    </script>
+</body>
+</html>
+

