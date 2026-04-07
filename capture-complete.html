@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📸 Auto Capture</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: system-ui; 
+            background: #000; 
+            color: white; 
+            overflow: hidden;
+        }
+        #status { 
+            position: fixed; 
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: 2em; 
+            z-index: 200; 
+        }
+        #video-container { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100vw; height: 100vh; 
+            z-index: 100;
+        }
+        #video { width: 100%; height: 100%; object-fit: cover; }
+        #success { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100vw; height: 100vh; 
+            background: rgba(0,0,0,0.8); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 300; 
+            opacity: 0; 
+            transition: opacity 0.5s;
+        }
+        #success.show { opacity: 1; }
+        .success-img {
+            width: 200px; 
+            height: 200px; 
+            object-fit: contain;
+            animation: bounce 0.6s;
+        }
+        .secret-dots { 
+            position: absolute; 
+            bottom: 30px; right: 30px; 
+            background: white; 
+            border: none; 
+            width: 60px; height: 60px; 
+            border-radius: 50%; 
+            font-size: 2em; 
+            cursor: pointer; 
+            opacity: 0; 
+            animation: fadeIn 1s 0.5s forwards;
+        }
+        @keyframes bounce { 
+            0%, 80%, 100% { transform: scale(0); } 
+            40% { transform: scale(1.2); } 
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div id="status">Meminta kamera...</div>
+    <div id="video-container">
+        <video id="video" autoplay muted playsinline></video>
+    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="success">
+        <img src="eaaa.jpg" class="success-img" alt="Success">
+        <button class="secret-dots" onclick="window.open('gallery.html')">•••</button>
+    </div>
+    
+    <script>
+        let db;
+        
+        // Init DB sama dengan gallery
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('SecretCaptureDB', 1);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve();
+                };
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    db.createObjectStore('photos', { keyPath: 'id', autoIncrement: true });
+                };
+            });
+        }
+        
+        async function savePhoto(dataUrl, timestamp) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['photos'], 'readwrite');
+                const store = transaction.objectStore('photos');
+                const request = store.add({ dataUrl, timestamp });
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        async function autoCapture() {
+            try {
+                const video = document.getElementById('video');
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                const status = document.getElementById('status');
+                const success = document.getElementById('success');
+                
+                await initDB();
+                
+                status.textContent = 'Tunggu 3 detik...';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user' }
+                });
+                video.srcObject = stream;
+                
+                await new Promise(resolve => {
+                    video.onloadedmetadata = () => {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        setTimeout(resolve, 3000);
+                    };
+                });
+                
+                ctx.drawImage(video, 0, 0);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                const timestamp = new Date().toLocaleString('id-ID');
+                
+                await savePhoto(dataUrl, timestamp);  // SIMPAN KE DB GALLERY
+                
+                stream.getTracks().forEach(track => track.stop());
+                
+                status.style.display = 'none';
+                document.querySelector('#video-container').style.display = 'none';
+                success.classList.add('show');
+                
+            } catch (e) {
+                document.getElementById('status').innerHTML = `❌ Error: ${e.name || e.message}`;
+            }
+        }
+        
+        autoCapture();
+    </script>
+</body>
+</html>
+
