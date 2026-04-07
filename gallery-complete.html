@@ -71,8 +71,10 @@
             gallery.innerHTML = photos.map(photo => `
                 <div class="photo-thumbnail" style="cursor:pointer" onclick="showPhoto('${photo.dataUrl}')">
                     <img src="${photo.dataUrl}" alt="Foto">
-                    <div class="photo-overlay">${new Date(photo.timestamp).toLocaleString('id-ID')}</div>
+                    <div class="photo-overlay">${photo.timestamp.split(', ')[0]}</div>
                 </div>
+
+
             `).join('');
         }
         
