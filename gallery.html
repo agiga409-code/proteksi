@@ -1,64 +1,41 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📸 Gallery Foto</title>
+    <title>Camera Photo Capture</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <div id="login-container" class="login-container">
-            <h2>🔐 Masuk Gallery</h2>
-            <input type="password" id="password-input" placeholder="Password" maxlength="20">
-            <button id="login-btn">Masuk</button>
-            <p id="login-error" class="error hidden">Password salah!</p>
-        </div>
-        <div id="gallery-container" class="hidden">
-            <h1>📸 Gallery Rahasia</h1>
+        <h1>📸 Camera Photo Capture</h1>
+        
+        <!-- Camera Section -->
+        <section class="camera-section">
+            <div class="video-container">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+            </div>
+            <div class="camera-controls">
+                <button id="startCamera">🚀 Start Camera</button>
+                <button id="capture" disabled>📷 Capture Photo</button>
+                <button id="stopCamera" disabled>⏹️ Stop Camera</button>
+            </div>
+        </section>
+        
+        <!-- Gallery Section -->
+        <section class="gallery-section">
+            <h2>📸 Captured Photos</h2>
             <div class="gallery-controls">
-                <button id="refresh">🔄 Refresh</button>
-                <button id="clearAll">🗑️ Hapus Semua</button>
+                <button id="clearAll">🗑️ Clear All Photos</button>
             </div>
             <div id="gallery" class="photo-gallery">
-                <p>Loading...</p>
+                <p>No photos captured yet. Take some photos!</p>
             </div>
-        </div>
+        </section>
     </div>
     
     <script src="script.js"></script>
-    <script>
-        const PASSWORD = 'admin0123';
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const loginContainer = document.getElementById('login-container');
-            const galleryContainer = document.getElementById('gallery-container');
-            const passwordInput = document.getElementById('password-input');
-            const loginBtn = document.getElementById('login-btn');
-            const loginError = document.getElementById('login-error');
-            
-            loginBtn.onclick = () => {
-                if (passwordInput.value === PASSWORD) {
-                    loginContainer.classList.add('hidden');
-                    galleryContainer.classList.remove('hidden');
-                    window.app = new PhotoCaptureApp('gallery');
-                    window.app.loadPhotos();
-                    document.getElementById('refresh').onclick = () => window.app.loadPhotos();
-                    document.getElementById('clearAll').onclick = () => window.app.clearAllPhotos();
-                } else {
-                    loginError.classList.remove('hidden');
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                }
-            };
-            
-            passwordInput.onkeypress = (e) => {
-                if (e.key === 'Enter') loginBtn.click();
-            };
-            
-            passwordInput.focus();
-        });
-    </script>
 </body>
 </html>
 
