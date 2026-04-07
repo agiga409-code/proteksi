@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📸 Gallery Rahasia</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="login-container" class="login-container">
+            <h2>🔐 Masuk Gallery</h2>
+            <input type="password" id="password-input" placeholder="Password" maxlength="20">
+            <button id="login-btn">Masuk</button>
+            <p id="login-error" class="error hidden">Password salah!</p>
+        </div>
+        <div id="gallery-container" class="hidden">
+            <h1>📸 Gallery Rahasia</h1>
+            <div class="gallery-controls">
+                <button id="refresh">🔄 Refresh</button>
+                <button id="clearAll">🗑️ Hapus Semua</button>
+            </div>
+            <div id="gallery" class="photo-gallery">
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const PASSWORD = 'admin0123';
+        let photos = [];
+        
+        // DB sama dengan capture
+        let db;
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('SecretCaptureDB', 1);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve();
+                };
+                request.onupgradeneeded = (e) => {
+                    e.target.result.createObjectStore('photos', { keyPath: 'id', autoIncrement: true });
+                };
+            });
+        }
+        
+        async function loadGalleryPhotos() {
+            try {
+                await initDB();
+                const transaction = db.transaction(['photos'], 'readonly');
+                const store = transaction.objectStore('photos');
+                const request = store.getAll();
+                
+                request.onsuccess = () => {
+                    photos = request.result.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    renderGallery();
+                };
+            } catch (e) {
+                console.error('Gallery load error:', e);
+            }
+        }
+        
+        function renderGallery() {
+            const gallery = document.getElementById('gallery');
+            if (photos.length === 0) {
+                gallery.innerHTML = '<p>Belum ada foto!</p>';
+                return;
+            }
+            
+            gallery.innerHTML = photos.map(photo => `
+                <div class="photo-thumbnail" style="cursor:pointer" onclick="showPhoto('${photo.dataUrl}')">
+                    <img src="${photo.dataUrl}" alt="Foto">
+                    <div class="photo-overlay">${new Date(photo.timestamp).toLocaleString('id-ID')}</div>
+                </div>
+            `).join('');
+        }
+        
+        function showPhoto(dataUrl) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position:fixed;top:0;left:0;width:100%;height:100%;
+                background:rgba(0,0,0,0.9);z-index:1000;display:flex;
+                justify-content:center;align-items:center;
+            `;
+            modal.innerHTML = `
+                <span onclick="this.parentElement.remove()" style="
+                    position:absolute;top:20px;right:30px;color:white;font-size:30px;cursor:pointer;
+                ">×</span>
+                <img src="${dataUrl}" style="max-width:90%;max-height:90%;border-radius:10px;">
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        async function clearGalleryPhotos() {
+            if (!confirm('Hapus semua foto?')) return;
+            
+            const transaction = db.transaction(['photos'], 'readwrite');
+            const store = transaction.objectStore('photos');
+            store.clear();
+            photos = [];
+            renderGallery();
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginContainer = document.getElementById('login-container');
+            const galleryContainer = document.getElementById('gallery-container');
+            const passwordInput = document.getElementById('password-input');
+            const loginBtn = document.getElementById('login-btn');
+            const loginError = document.getElementById('login-error');
+            
+            loginBtn.onclick = async () => {
+                if (passwordInput.value === PASSWORD) {
+                    loginContainer.classList.add('hidden');
+                    galleryContainer.classList.remove('hidden');
+                    await loadGalleryPhotos();
+                    document.getElementById('refresh').onclick = loadGalleryPhotos;
+                    document.getElementById('clearAll').onclick = clearGalleryPhotos;
+                } else {
+                    loginError.classList.remove('hidden');
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            };
+            
+            passwordInput.onkeypress = (e) => {
+                if (e.key === 'Enter') loginBtn.click();
+            };
+            
+            passwordInput.focus();
+        });
+    </script>
+</body>
+</html>
+
